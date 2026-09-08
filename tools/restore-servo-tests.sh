@@ -5,7 +5,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEST="${SERVO_TESTS_DEST:-$ROOT/vendor/servo/tests}"
-SENTINEL="$DEST/wpt/tests/tools/wptrunner/wptrunner.py"
+SENTINEL="$DEST/wpt/tests/tools/wptrunner/wptrunner/wptrunner.py"
 SERVO_REV="1d44e5dd6a8b64c02f9dbf7fcbdf4ebdd0740019"
 
 if [[ -f "$SENTINEL" ]]; then

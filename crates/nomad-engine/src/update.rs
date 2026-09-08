@@ -1297,11 +1297,8 @@ mod tests {
         let (update, key, artifact) = signed_update();
         let verified =
             verify_update(&update, &[key], "1.1.9", "x86_64-apple-darwin", &artifact).unwrap();
-        let root = std::env::temp_dir().join(format!(
-            "nomad-update-recovery-{}-{}",
-            std::process::id(),
-            std::thread::current().name().unwrap_or("test")
-        ));
+        let root =
+            std::env::temp_dir().join(format!("nomad-update-recovery-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         let update_stager = UpdateStager::new(&root);
         let staged_update = update_stager.stage(&verified, &artifact).unwrap();

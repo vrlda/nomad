@@ -6442,11 +6442,7 @@ mod tests {
 
     #[test]
     fn directory_package_loads_all_safe_resources() {
-        let root = std::env::temp_dir().join(format!(
-            "nomad-extension-{}-{}",
-            std::process::id(),
-            std::thread::current().name().unwrap_or("test")
-        ));
+        let root = std::env::temp_dir().join(format!("nomad-extension-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(root.join("scripts")).unwrap();
         std::fs::write(

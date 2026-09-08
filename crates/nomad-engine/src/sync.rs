@@ -554,11 +554,7 @@ mod tests {
 
     #[test]
     fn file_sync_transport_round_trips_encrypted_records() {
-        let path = std::env::temp_dir().join(format!(
-            "nomad-sync-{}-{}.json",
-            std::process::id(),
-            std::thread::current().name().unwrap_or("test")
-        ));
+        let path = std::env::temp_dir().join(format!("nomad-sync-{}.json", std::process::id()));
         let _ = std::fs::remove_file(&path);
         let mut transport = FileSyncTransport::new(&path);
         let codec = EncryptedSyncCodec::new([9; 32]);

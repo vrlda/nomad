@@ -8671,11 +8671,8 @@ mod tests {
 
     #[test]
     fn loads_xray_json_profile_from_path() {
-        let path = std::env::temp_dir().join(format!(
-            "nomad-xray-profile-{}-{}.json",
-            std::process::id(),
-            std::thread::current().name().unwrap_or("test")
-        ));
+        let path =
+            std::env::temp_dir().join(format!("nomad-xray-profile-{}.json", std::process::id()));
         std::fs::write(
             &path,
             r#"{"outbounds":[{"protocol":"blackhole","settings":{}}]}"#,
