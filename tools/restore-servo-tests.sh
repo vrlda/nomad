@@ -6,9 +6,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEST="${SERVO_TESTS_DEST:-$ROOT/vendor/servo/tests}"
 SENTINEL="$DEST/wpt/tests/tools/wptrunner/wptrunner/wptrunner.py"
+META_SENTINEL="$DEST/wpt/meta/MANIFEST.json"
 SERVO_REV="1d44e5dd6a8b64c02f9dbf7fcbdf4ebdd0740019"
 
-if [[ -f "$SENTINEL" ]]; then
+if [[ -f "$SENTINEL" && -f "$META_SENTINEL" ]]; then
   echo "Servo test corpus already present"
   exit 0
 fi
@@ -22,6 +23,7 @@ git -C "$TEMP_DIR/servo" sparse-checkout init --cone
 git -C "$TEMP_DIR/servo" sparse-checkout set \
   tests/capi \
   tests/unit \
+  tests/wpt/meta \
   tests/wpt/tests/tools \
   tests/wpt/tests/resources \
   tests/wpt/tests/FileAPI \
@@ -53,4 +55,5 @@ git -C "$TEMP_DIR/servo" checkout --quiet --detach FETCH_HEAD
 mkdir -p "$DEST"
 cp -R "$TEMP_DIR/servo/tests/." "$DEST/"
 test -f "$SENTINEL"
+test -f "$META_SENTINEL"
 echo "Restored Servo test corpus at $SERVO_REV"
