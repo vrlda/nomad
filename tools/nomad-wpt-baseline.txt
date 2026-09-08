@@ -1,0 +1,28 @@
+# Nomad's checked-in WPT baseline slice.
+#
+# Keep this list small, deterministic, and organized by API family. It is a
+# smoke/conformance starting point, not a claim of full standards coverage.
+
+# DOM and events
+dom/interface-objects.html
+dom/events/EventTarget-dispatchEvent.html
+dom/events/Event-dispatch-bubbles-true.html
+dom/events/EventTarget-add-remove-listener.any.html
+
+# File and URL APIs
+FileAPI/url/url-lifetime.html
+
+# Web Storage
+webstorage/storage_getitem.window.html
+
+# Service workers and Cache API
+service-workers/service-worker/activation-after-registration.https.html
+service-workers/service-worker/claim-fetch.https.html
+service-workers/service-worker/skip-waiting.https.html
+service-workers/cache-storage/credentials.https.html
+service-workers/cache-storage/cache-keys-attributes-for-service-worker.https.html
+
+# CSS parsing and computed-style basics
+css/css-box/parsing/width-valid.html
+css/css-box/parsing/padding-shorthand.html
+css/css-box/parsing/margin-valid.html

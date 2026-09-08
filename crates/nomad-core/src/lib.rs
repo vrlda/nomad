@@ -5,6 +5,17 @@ pub enum RouteMode {
     Xray,
 }
 
+impl RouteMode {
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Direct => "Direct",
+            Self::Umc => "UMC",
+            Self::Xray => "Xray",
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Switches {
     mode: RouteMode,
@@ -36,6 +47,16 @@ impl Switches {
         Self {
             mode: RouteMode::Xray,
         }
+    }
+
+    #[must_use]
+    pub const fn for_route(route: RouteMode) -> Self {
+        Self { mode: route }
+    }
+
+    #[must_use]
+    pub const fn route(self) -> RouteMode {
+        self.mode
     }
 
     #[must_use]
@@ -81,6 +102,40 @@ impl Switches {
     }
 }
 
+/// The validated, mutually-exclusive route contract shared by the shell and transport.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RouteSelection {
+    switches: Switches,
+    route: RouteMode,
+}
+
+impl RouteSelection {
+    /// Resolves one switch state into the route that may be used for traffic.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the selected backend is unavailable.
+    pub fn resolve(
+        switches: Switches,
+        availability: BackendAvailability,
+    ) -> Result<Self, RouteError> {
+        Ok(Self {
+            switches,
+            route: switches.resolve_route(availability)?,
+        })
+    }
+
+    #[must_use]
+    pub const fn switches(self) -> Switches {
+        self.switches
+    }
+
+    #[must_use]
+    pub const fn route(self) -> RouteMode {
+        self.route
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BackendAvailability {
     pub umc_available: bool,
@@ -110,7 +165,7 @@ pub enum RouteError {
 
 #[cfg(test)]
 mod tests {
-    use super::{BackendAvailability, RouteError, RouteMode, Switches};
+    use super::{BackendAvailability, RouteError, RouteMode, RouteSelection, Switches};
 
     #[test]
     fn test_switches_default_to_disabled() {
@@ -181,5 +236,15 @@ mod tests {
         switches.set_xray_enabled(false);
         assert!(!switches.umc_enabled());
         assert!(!switches.xray_enabled());
+    }
+
+    #[test]
+    fn test_route_selection_freezes_one_validated_route() {
+        let selection =
+            RouteSelection::resolve(Switches::xray(), BackendAvailability::all_available())
+                .unwrap();
+
+        assert_eq!(selection.route(), RouteMode::Xray);
+        assert_eq!(selection.switches().route(), RouteMode::Xray);
     }
 }

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDisplayName</key>
+  <string>Nomad Browser</string>
+  <key>CFBundleExecutable</key>
+  <string>nomad-browser</string>
+  <key>CFBundleIdentifier</key>
+  <string>org.nomad.browser</string>
+  <key>CFBundleName</key>
+  <string>Nomad Browser</string>
+  <key>CFBundleIconFile</key>
+  <string>Nomad</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>@VERSION@</string>
+  <key>CFBundleVersion</key>
+  <string>@VERSION@</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>12.0</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>NSHumanReadableCopyright</key>
+  <string>Nomad Browser contributors</string>
+</dict>
+</plist>

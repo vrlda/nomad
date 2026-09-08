@@ -1,0 +1,66 @@
+[package]
+name = "nomad-fuzz"
+version = "0.1.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+nomad-engine = { path = "../crates/nomad-engine" }
+url = "2.5"
+
+[features]
+default = ["fuzzing"]
+fuzzing = ["nomad-engine/fuzzing"]
+
+[[bin]]
+name = "proxy_endpoint"
+path = "fuzz_targets/proxy_endpoint.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "network_profile"
+path = "fuzz_targets/network_profile.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "extension_manifest"
+path = "fuzz_targets/extension_manifest.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "xray_config"
+path = "fuzz_targets/xray_config.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "xray_framing"
+path = "fuzz_targets/xray_framing.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "xray_reality"
+path = "fuzz_targets/xray_reality.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "umc_control_envelope"
+path = "fuzz_targets/umc_control_envelope.rs"
+test = false
+doc = false
+bench = false

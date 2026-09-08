@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Nomad Browser" Manufacturer="Nomad Browser contributors"
+           Version="0.1.0" UpgradeCode="{3A0AF0D3-1B7E-4A4C-9A7A-0F3A0C5A9E21}">
+    <MajorUpgrade DowngradeErrorMessage="A newer Nomad Browser is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <Feature Id="MainFeature" Title="Nomad Browser" Level="1">
+      <ComponentGroupRef Id="ApplicationFiles" />
+      <ComponentRef Id="ApplicationShortcut" />
+    </Feature>
+    <ComponentGroup Id="ApplicationFiles" Directory="INSTALLFOLDER">
+      <Component Guid="*">
+        <File Source="target\\release\\nomad-browser.exe" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+    <Directory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Nomad Browser" />
+    </Directory>
+    <DirectoryRef Id="ProgramMenuFolder">
+      <Component Id="ApplicationShortcut" Guid="*">
+        <Shortcut Id="StartMenuShortcut" Name="Nomad Browser" Target="[INSTALLFOLDER]nomad-browser.exe" />
+        <RemoveFolder Id="RemoveProgramMenuFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\\Nomad Browser" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+  </Package>
+</Wix>

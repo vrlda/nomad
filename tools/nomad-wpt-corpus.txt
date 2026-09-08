@@ -1,0 +1,225 @@
+# Nomad declared standards corpus.
+#
+# Each test is identified by its generated WPT variant prefix (e.g. url/url-constructor.any.html
+# expands to its ?include=/?exclude= sub-variants). Expected status is per-platform:
+#   PASS    - every subtest must pass on every supported platform.
+#   FAIL    - a declared, understood gap. The exact expected-failing subtests are listed
+#             as JSON-encoded indented lines beneath the test entry.
+#   BLOCKED - the test cannot be executed on a platform (infrastructure limit); recorded
+#             with the reason, not silently skipped.
+#
+# Format: <test-id> | <status> | <optional note>
+# A FAIL entry must fail exactly on the listed subtests and pass everywhere else.
+# The runner emits a deterministic JSON artifact per platform.
+#
+# Vendored-tree note: the upstream WPT snapshot ships both a "Streams" and a lowercase
+# "streams" tree; the Servo manifest generator keys on the lowercase duplicate, so the
+# Streams family is excluded from this corpus until the vendored tree is deduplicated.
+
+FileAPI/fileReader.any.html | PASS
+FileAPI/idlharness.any.html | PASS
+FileAPI/unicode.any.html | PASS
+IndexedDB/abort-in-initial-upgradeneeded.any.html | PASS
+IndexedDB/blob-composite-blob-reads.any.html | PASS
+WebCryptoAPI/digest/digest.https.any.html | PASS
+console/console-is-a-namespace.any.html | PASS
+css/css-box/parsing/margin-valid.html | PASS
+css/css-box/parsing/padding-shorthand.html | PASS
+css/css-box/parsing/width-valid.html | PASS
+css/cssom/CSSStyleDeclaration-iterator.html | PASS
+dom/attributes-are-nodes.html | PASS
+dom/events/Event-dispatch-bubbles-true.html | PASS
+dom/events/EventTarget-add-remove-listener.any.html | PASS
+dom/interface-objects.html | PASS
+dom/nodes/Document-createElement.html | PASS
+dom/nodes/Node-childNodes.html | PASS
+dom/traversal/TreeWalker-basic.html | PASS
+domparsing/DOMParser-parseFromString-html.html | PASS
+encoding/api-basics.any.html | PASS
+encoding/replacement-encodings.any.html | PASS
+encoding/textdecoder-utf16-surrogates.any.html | PASS
+fetch/api/basic/accept-header.any.html | PASS
+fetch/api/basic/mode-same-origin.any.html | PASS
+fetch/api/basic/referrer.any.html | PASS
+fetch/api/basic/text-utf8.any.html | PASS
+html/dom/documents/dom-tree-accessors/Document.body.html | PASS
+html/dom/documents/dom-tree-accessors/document.title-01.html | PASS
+html/syntax/parsing-html-fragments/the-input-byte-stream-001.html | PASS
+performance-timeline/po-getentries.any.html | PASS
+performance-timeline/po-mark-measure.any.html | PASS
+url/url-statics-parse.any.html | PASS
+url/urlencoded-parser.any.html | PASS
+url/urlsearchparams-append.any.html | PASS
+websockets/constructor.any.html | PASS
+webstorage/storage_getitem.window.html | PASS
+webstorage/storage_key.window.html | PASS
+webstorage/storage_length.window.html | PASS
+workers/constructors/Worker/Blob-url.html | PASS
+workers/constructors/Worker/Worker-constructor.html | PASS
+workers/constructors/Worker/ctor-1.html | PASS
+workers/constructors/Worker/same-origin.html | PASS
+xhr/XMLHttpRequest-withCredentials.any.html | PASS
+xhr/abort-after-receive.any.html | PASS
+xhr/abort-after-send.any.html | PASS
+accname/name/comp_label.html | PASS | WebDriver get computed label and DOM-backed accessible-name computation; native macOS probe passes 131/131 subtests.
+
+# Service workers and Cache API
+service-workers/service-worker/activation-after-registration.https.html | PASS
+service-workers/service-worker/claim-fetch.https.html | PASS
+service-workers/service-worker/multiple-update.https.html | PASS | Native macOS update lifecycle and ten-job coalescing probe; upstream metadata is stale and reports an unexpected pass.
+service-workers/service-worker/navigation-preload/request-headers.https.html | PASS | Navigation Preload request-header behavior; native macOS probe passes its declared subtest.
+service-workers/service-worker/skip-waiting.https.html | PASS
+service-workers/service-worker/update-on-navigation.https.html | PASS | Active worker remains available during registration update; native macOS probe passes its declared subtest.
+service-workers/service-worker/update-result.https.html | PASS | ServiceWorkerRegistration.update() resolves the registration object; native macOS probe passes its declared subtest.
+service-workers/cache-storage/credentials.https.html | PASS
+service-workers/cache-storage/cache-keys-attributes-for-service-worker.https.html | PASS
+
+compression/compression-bad-chunks.any.html | FAIL | CompressionStream gaps: SharedArrayBuffer variants fail because SharedArrayBuffer is disabled by default in this Servo embedding; brotli is an unimplemented compression format.
+    - "chunk of type SharedArrayBuffer should error the stream for deflate"
+    - "chunk of type shared Uint8Array should error the stream for deflate"
+    - "chunk of type SharedArrayBuffer should error the stream for deflate-raw"
+    - "chunk of type shared Uint8Array should error the stream for deflate-raw"
+    - "chunk of type SharedArrayBuffer should error the stream for gzip"
+    - "chunk of type shared Uint8Array should error the stream for gzip"
+    - "chunk of type undefined should error the stream for brotli"
+    - "chunk of type null should error the stream for brotli"
+    - "chunk of type numeric should error the stream for brotli"
+    - "chunk of type object, not BufferSource should error the stream for brotli"
+    - "chunk of type array should error the stream for brotli"
+    - "chunk of type SharedArrayBuffer should error the stream for brotli"
+    - "chunk of type shared Uint8Array should error the stream for brotli"
+
+compression/compression-multiple-chunks.any.html | FAIL | CompressionStream: brotli format unimplemented; all other formats (deflate/deflate-raw/gzip) pass.
+    - "compressing 2 chunks with brotli should work"
+    - "compressing 3 chunks with brotli should work"
+    - "compressing 4 chunks with brotli should work"
+    - "compressing 5 chunks with brotli should work"
+    - "compressing 6 chunks with brotli should work"
+    - "compressing 7 chunks with brotli should work"
+    - "compressing 8 chunks with brotli should work"
+    - "compressing 9 chunks with brotli should work"
+    - "compressing 10 chunks with brotli should work"
+    - "compressing 11 chunks with brotli should work"
+    - "compressing 12 chunks with brotli should work"
+    - "compressing 13 chunks with brotli should work"
+    - "compressing 14 chunks with brotli should work"
+    - "compressing 15 chunks with brotli should work"
+    - "compressing 16 chunks with brotli should work"
+
+console/console-count-logging.html | FAIL | console.count() default-label parameter not yet supported.
+    - "Console count method default parameter should work"
+
+css/cssom/CSSStyleRule.html | FAIL | CSSStyleRule CSSRule attribute surface (existence/writability/values) partially missing in CSSOM.
+    - "Existence of CSSRule attributes"
+    - "Writability of CSSRule attributes"
+    - "Values of CSSRule attributes"
+
+dom/events/EventTarget-dispatchEvent.html | FAIL | DeviceMotionEvent, DeviceOrientationEvent, and DragEvent constructors not implemented.
+    - "If the event's initialized flag is not set, an InvalidStateError must be thrown (DeviceMotionEvent)."
+    - "If the event's initialized flag is not set, an InvalidStateError must be thrown (DeviceOrientationEvent)."
+    - "If the event's initialized flag is not set, an InvalidStateError must be thrown (DragEvent)."
+
+encoding/textdecoder-streaming.any.html | FAIL | TextDecoder streaming decode over SharedArrayBuffer variants fail because SharedArrayBuffer is disabled by default in this Servo embedding.
+    - "Streaming decode: utf-8, 1 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-8, 2 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-8, 3 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-8, 4 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-8, 5 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-16le, 1 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-16le, 2 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-16le, 3 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-16le, 4 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-16le, 5 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-16be, 1 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-16be, 2 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-16be, 3 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-16be, 4 byte window (SharedArrayBuffer)"
+    - "Streaming decode: utf-16be, 5 byte window (SharedArrayBuffer)"
+    - "Streaming decode: UTF-8 chunk tests (SharedArrayBuffer)"
+
+url/url-constructor.any.html | FAIL | URL parser gaps: non-special opaque-scheme handling, file URL parsing, IDN/punycode edge cases, tab/newline stripping in opaque paths, backslash handling.
+    - "Parsing: <non-special:opaque  ?hi> without base"
+    - "Parsing: <non-special:opaque  #hi> without base"
+    - "Parsing: <non-special:opaque \t\t  \t#hi> without base"
+    - "Parsing: <non-special:opaque \t\t  #hi> without base"
+    - "Parsing: <non-special:opaque\t\t  \r #hi> without base"
+    - "Parsing: <http://a.b.c.xn--pokxncvks> without base"
+    - "Parsing: <http://10.0.0.xn--pokxncvks> without base"
+    - "Parsing: <http://a.b.c.XN--pokxncvks> without base"
+    - "Parsing: <http://a.b.c.Xn--pokxncvks> without base"
+    - "Parsing: <http://10.0.0.XN--pokxncvks> without base"
+    - "Parsing: <http://10.0.0.xN--pokxncvks> without base"
+    - "Parsing: <..> against <abc://x/y/z/C:/>"
+    - "Parsing: <foo://host/ !\"$%&'()*+,-./:;<=>@[\\]^_`{|}~> without base"
+    - "Parsing: <wss://host/ !\"$%&'()*+,-./:;<=>@[\\]^_`{|}~> without base"
+    - "Parsing: <https://xn--/> without base"
+    - "Parsing: <///test> against <http://example.org/>"
+    - "Parsing: <///\\//\\//test> against <http://example.org/>"
+    - "Parsing: <///example.org/path> against <http://example.org/>"
+    - "Parsing: <///example.org/../path> against <http://example.org/>"
+    - "Parsing: <///example.org/../../> against <http://example.org/>"
+    - "Parsing: <///example.org/../path/../../> against <http://example.org/>"
+    - "Parsing: <///example.org/../path/../../path> against <http://example.org/>"
+    - "Parsing: <\\a> against <foo://foo/a>"
+    - "Parsing: <\\/a> against <foo://foo/a>"
+    - "Parsing: <\\\\a> against <foo://foo/a>"
+    - "Parsing: <file:///w|/m> without base"
+    - "Parsing: </> against <file://h/C:/a/b>"
+    - "Parsing: <file:\\\\//> without base"
+    - "Parsing: <file:\\\\\\\\> without base"
+    - "Parsing: <file:\\\\\\\\?fox> without base"
+    - "Parsing: <file:\\\\\\\\#guppy> without base"
+    - "Parsing: <file://spider///> without base"
+    - "Parsing: <file:\\\\localhost//> without base"
+    - "Parsing: <file://\\/localhost//cat> without base"
+    - "Parsing: <file://localhost//a//../..//> without base"
+    - "Parsing: </////mouse> against <file:///elephant>"
+    - "Parsing: <\\/localhost//pig> against <file://lion/>"
+    - "Parsing: <//localhost//pig> against <file://lion/>"
+    - "Parsing: </..//localhost//pig> against <file://lion/>"
+    - "Parsing: <C|> against <file://host/dir/file>"
+    - "Parsing: <C|> against <file://host/D:/dir1/dir2/file>"
+    - "Parsing: <C|#> against <file://host/dir/file>"
+    - "Parsing: <C|?> against <file://host/dir/file>"
+    - "Parsing: <C|/> against <file://host/dir/file>"
+    - "Parsing: <C|\n/> against <file://host/dir/file>"
+    - "Parsing: <C|\\> against <file://host/dir/file>"
+    - "Parsing: </c:/foo/bar> against <file://host/path>"
+    - "Parsing: <..> against <file://x/C:/>"
+    - "Parsing: <file://example.net/C:/> without base"
+    - "Parsing: <file://1.2.3.4/C:/> without base"
+    - "Parsing: <file://[1::8]/C:/> without base"
+    - "Parsing: <C|/> against <file://host/>"
+    - "Parsing: </C:/> against <file://host/>"
+    - "Parsing: <file:C:/> against <file://host/>"
+    - "Parsing: <file:/C:/> against <file://host/>"
+    - "Parsing: <file://localhost//a//../..//foo> without base"
+    - "Parsing: <file://localhost////foo> without base"
+    - "Parsing: <file:////foo> without base"
+    - "Parsing: <file:////one/two> against <file:///>"
+    - "Parsing: <////one/two> against <file:///>"
+    - "Parsing: <file:///.//> against <file:////>"
+    - "Parsing: <file:.//p> without base"
+    - "Parsing: <file:/.//p> without base"
+    - "Parsing: <file://xn--/p> without base"
+    - "Parsing: </\\//\\/a/../> against <file:///>"
+
+web-animations/interfaces/Animation/constructor.html | FAIL | Web Animations Animation constructor: null-effect/null-timeline construction cases and keyframe-in-iframe cases.
+    - "Animation can be constructed with null effect and null timeline"
+    - "Animation can be constructed with null effect and non-null timeline"
+    - "Animation can be constructed with null effect and no timeline parameter"
+    - "Animation can be constructed with non-null effect and null timeline"
+    - "Animation can be constructed with non-null effect and non-null timeline"
+    - "Animation can be constructed with non-null effect and no timeline parameter"
+    - "Animation constructed by an effect with null target runs normally"
+    - "Animation constructed with a keyframe that target element is in iframe"
+    - "Animation created with an affect associated with another animation."
+
+websockets/Close-1000.any.html | FAIL | WebSocket close handshake: the HTTP/2 (h2) variant only; HTTP/1.1 passes.
+    - "Create WebSocket - Close the Connection - close(1000) - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed"
+
+# Service-worker and CacheStorage partitioned probes (auxiliary webview support, 2026-09-02).
+# All three native macOS probes pass with real assertions.
+service-workers/service-worker/partitioned.tentative.https.html | PASS
+service-workers/service-worker/partitioned-getRegistrations.tentative.https.html | PASS
+html/anonymous-iframe/cache-storage.tentative.https.window.html | PASS

@@ -1,0 +1,218 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
+use std::cell::Cell;
+
+use dom_struct::dom_struct;
+use js::context::JSContext;
+use js::jsapi::{Heap, JSObject};
+use js::rust::{CustomAutoRooter, CustomAutoRooterGuard, HandleValue};
+use script_bindings::cell::DomRefCell;
+use script_bindings::reflector::reflect_dom_object_with_cx;
+use servo_base::id::ServiceWorkerId;
+use servo_constellation_traits::{DOMMessage, ScriptToConstellationMessage};
+use servo_url::ServoUrl;
+
+use crate::dom::abstractworker::SimpleWorkerErrorHandler;
+use crate::dom::bindings::codegen::Bindings::MessagePortBinding::StructuredSerializeOptions;
+use crate::dom::bindings::codegen::Bindings::ServiceWorkerBinding::{
+    ServiceWorkerMethods, ServiceWorkerState,
+};
+use crate::dom::bindings::error::{Error, ErrorResult};
+use crate::dom::bindings::inheritance::Castable;
+use crate::dom::bindings::refcounted::Trusted;
+use crate::dom::bindings::reflector::DomGlobal;
+use crate::dom::bindings::root::DomRoot;
+use crate::dom::bindings::str::USVString;
+use crate::dom::bindings::structuredclone;
+use crate::dom::bindings::trace::RootedTraceableBox;
+use crate::dom::eventtarget::EventTarget;
+use crate::dom::globalscope::GlobalScope;
+use crate::tasks::task::TaskOnce;
+
+pub(crate) type TrustedServiceWorkerAddress = Trusted<ServiceWorker>;
+
+#[dom_struct]
+pub(crate) struct ServiceWorker {
+    eventtarget: EventTarget,
+    script_url: DomRefCell<String>,
+    #[no_trace]
+    scope_url: ServoUrl,
+    state: Cell<ServiceWorkerState>,
+    #[no_trace]
+    worker_id: ServiceWorkerId,
+}
+
+impl ServiceWorker {
+    fn new_inherited(
+        script_url: &str,
+        scope_url: ServoUrl,
+        worker_id: ServiceWorkerId,
+    ) -> ServiceWorker {
+        ServiceWorker {
+            eventtarget: EventTarget::new_inherited(),
+            script_url: DomRefCell::new(String::from(script_url)),
+            state: Cell::new(ServiceWorkerState::Installing),
+            scope_url,
+            worker_id,
+        }
+    }
+
+    pub(crate) fn new(
+        cx: &mut js::context::JSContext,
+        global: &GlobalScope,
+        script_url: ServoUrl,
+        scope_url: ServoUrl,
+        worker_id: ServiceWorkerId,
+    ) -> DomRoot<ServiceWorker> {
+        reflect_dom_object_with_cx(
+            Box::new(ServiceWorker::new_inherited(
+                script_url.as_str(),
+                scope_url,
+                worker_id,
+            )),
+            global,
+            cx,
+        )
+    }
+
+    pub(crate) fn dispatch_simple_error(cx: &mut JSContext, address: TrustedServiceWorkerAddress) {
+        let service_worker = address.root();
+        service_worker.upcast().fire_event(cx, atom!("error"));
+    }
+
+    pub(crate) fn get_script_url(&self) -> ServoUrl {
+        ServoUrl::parse(&self.script_url.borrow().clone()).unwrap()
+    }
+
+    pub(crate) fn set_state(&self, cx: &mut JSContext, state: ServiceWorkerState) {
+        if !self.transition_state(state) {
+            return;
+        }
+        self.upcast().fire_event(cx, atom!("statechange"));
+    }
+
+    fn transition_state(&self, state: ServiceWorkerState) -> bool {
+        if self.state.get() == state {
+            return false;
+        }
+        self.state.set(state);
+        true
+    }
+
+    pub(crate) fn worker_id(&self) -> ServiceWorkerId {
+        self.worker_id
+    }
+
+    pub(crate) fn scope_url(&self) -> ServoUrl {
+        self.scope_url.clone()
+    }
+
+    /// <https://w3c.github.io/ServiceWorker/#service-worker-postmessage>
+    fn post_message_impl(
+        &self,
+        cx: &mut JSContext,
+        message: HandleValue,
+        transfer: CustomAutoRooterGuard<Vec<*mut JSObject>>,
+    ) -> ErrorResult {
+        // Step 1
+        if let ServiceWorkerState::Redundant = self.state.get() {
+            return Err(Error::InvalidState(None));
+        }
+        // Step 7
+        let data = structuredclone::write(cx, message, Some(transfer))?;
+        let incumbent = GlobalScope::incumbent().expect("no incumbent global?");
+        let pipeline_id = incumbent.pipeline_id();
+        let msg_vec = DOMMessage {
+            origin: incumbent.origin().immutable().clone(),
+            pipeline_id,
+            data,
+        };
+        let partition_key = incumbent.storage_partition_key().map(str::to_owned);
+        let _ = self.global().script_to_constellation_chan().send(
+            ScriptToConstellationMessage::ForwardDOMMessage(
+                msg_vec,
+                self.scope_url.clone(),
+                partition_key,
+            ),
+        );
+        Ok(())
+    }
+}
+
+impl ServiceWorkerMethods<crate::DomTypeHolder> for ServiceWorker {
+    /// <https://w3c.github.io/ServiceWorker/#service-worker-state-attribute>
+    fn State(&self) -> ServiceWorkerState {
+        self.state.get()
+    }
+
+    /// <https://w3c.github.io/ServiceWorker/#service-worker-url-attribute>
+    fn ScriptURL(&self) -> USVString {
+        USVString(self.script_url.borrow().clone())
+    }
+
+    /// <https://w3c.github.io/ServiceWorker/#service-worker-postmessage>
+    fn PostMessage(
+        &self,
+        cx: &mut JSContext,
+        message: HandleValue,
+        transfer: CustomAutoRooterGuard<Vec<*mut JSObject>>,
+    ) -> ErrorResult {
+        self.post_message_impl(cx, message, transfer)
+    }
+
+    /// <https://w3c.github.io/ServiceWorker/#service-worker-postmessage>
+    fn PostMessage_(
+        &self,
+        cx: &mut JSContext,
+        message: HandleValue,
+        options: RootedTraceableBox<StructuredSerializeOptions>,
+    ) -> ErrorResult {
+        let mut rooted = CustomAutoRooter::new(
+            options
+                .transfer
+                .iter()
+                .map(|js: &RootedTraceableBox<Heap<*mut JSObject>>| js.get())
+                .collect(),
+        );
+        #[expect(unsafe_code)]
+        let guard = unsafe { CustomAutoRooterGuard::new(cx.raw_cx(), &mut rooted) };
+        self.post_message_impl(cx, message, guard)
+    }
+
+    // https://w3c.github.io/ServiceWorker/#service-worker-container-onerror-attribute
+    event_handler!(error, GetOnerror, SetOnerror);
+
+    // https://w3c.github.io/ServiceWorker/#ref-for-service-worker-onstatechange-attribute-1
+    event_handler!(statechange, GetOnstatechange, SetOnstatechange);
+}
+
+impl TaskOnce for SimpleWorkerErrorHandler<ServiceWorker> {
+    #[cfg_attr(crown, expect(crown::unrooted_must_root))]
+    fn run_once(self, cx: &mut JSContext) {
+        ServiceWorker::dispatch_simple_error(cx, self.addr);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ServiceWorker, ServiceWorkerState};
+    use servo_base::id::ServiceWorkerId;
+    use servo_url::ServoUrl;
+
+    #[test]
+    fn service_worker_state_can_transition_after_installation() {
+        servo_base::id::PipelineNamespace::install(servo_base::id::PipelineNamespaceId(1));
+        let worker = ServiceWorker::new_inherited(
+            "https://example.com/sw.js",
+            ServoUrl::parse("https://example.com/").expect("valid scope"),
+            ServiceWorkerId::new(),
+        );
+
+        assert_eq!(worker.state.get(), ServiceWorkerState::Installing);
+        assert!(worker.transition_state(ServiceWorkerState::Activated));
+        assert!(!worker.transition_state(ServiceWorkerState::Activated));
+        assert_eq!(worker.state.get(), ServiceWorkerState::Activated);
+    }
+}

@@ -1,0 +1,96 @@
+name: Nomad release artifacts
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Package (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: macos
+            binary: target/release/nomad-browser
+          - os: ubuntu-latest
+            platform: linux
+            binary: target/release/nomad-browser
+          - os: windows-latest
+            platform: windows
+            binary: target/release/nomad-browser.exe
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build native release binary
+        run: cargo build --release -p nomad-browser --features native-servo
+
+      - name: Create reproducible artifact
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          target="$(rustc -vV | awk '/^host:/ {print $2}')"
+          mkdir -p dist
+          python3 tools/package-nomad.py \
+            --binary "${{ matrix.binary }}" \
+            --output "dist/nomad-browser-${{ matrix.platform }}-${version}.tar.gz" \
+            --version "${version}" \
+            --platform "${target}"
+
+      - name: Create macOS application DMG
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          tools/package-macos-dmg.sh "${version}" target/release/nomad-browser dist
+
+      - name: Validate artifact manifest and hashes
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          target="$(rustc -vV | awk '/^host:/ {print $2}')"
+          python3 tools/package-nomad.py \
+            --output "dist/nomad-browser-${{ matrix.platform }}-${version}.tar.gz" \
+            --version "${version}" \
+            --platform "${target}" \
+            --binary "${{ matrix.binary }}" \
+            --validate
+
+      - name: Upload unsigned artifact for signing job
+        uses: actions/upload-artifact@v4
+        with:
+          name: nomad-${{ matrix.platform }}-${{ github.sha }}
+          path: dist/*
+
+  publish:
+    name: Publish GitHub prerelease
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download packaged artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create Alpha release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "Nomad Browser ${GITHUB_REF_NAME}" \
+            --generate-notes \
+            --prerelease

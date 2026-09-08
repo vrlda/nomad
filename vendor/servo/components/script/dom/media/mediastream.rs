@@ -1,0 +1,241 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
+use dom_struct::dom_struct;
+use js::rust::HandleObject;
+use script_bindings::cell::{DomRefCell, Ref};
+use script_bindings::reflector::reflect_dom_object_with_proto;
+use servo_media::streams::MediaStreamType;
+use servo_media::streams::registry::MediaStreamId;
+
+use crate::dom::bindings::codegen::Bindings::MediaStreamBinding::MediaStreamMethods;
+use crate::dom::bindings::error::Fallible;
+use crate::dom::bindings::inheritance::Castable;
+use crate::dom::bindings::refcounted::Trusted;
+use crate::dom::bindings::reflector::DomGlobal;
+use crate::dom::bindings::root::{Dom, DomRoot};
+use crate::dom::bindings::str::DOMString;
+use crate::dom::event::Event;
+use crate::dom::eventtarget::EventTarget;
+use crate::dom::globalscope::GlobalScope;
+use crate::dom::media::mediastreamtrack::MediaStreamTrack;
+use crate::dom::media::mediastreamtrackevent::MediaStreamTrackEvent;
+use crate::dom::window::Window;
+use stylo_atoms::Atom;
+
+#[dom_struct]
+pub(crate) struct MediaStream {
+    eventtarget: EventTarget,
+    #[ignore_malloc_size_of = "defined in servo-media"]
+    #[no_trace]
+    id: MediaStreamId,
+    tracks: DomRefCell<Vec<Dom<MediaStreamTrack>>>,
+}
+
+impl MediaStream {
+    pub(crate) fn new_inherited() -> MediaStream {
+        MediaStream {
+            eventtarget: EventTarget::new_inherited(),
+            id: MediaStreamId::new(),
+            tracks: DomRefCell::new(vec![]),
+        }
+    }
+
+    pub(crate) fn new(
+        cx: &mut js::context::JSContext,
+        global: &GlobalScope,
+    ) -> DomRoot<MediaStream> {
+        Self::new_with_proto(cx, global, None)
+    }
+
+    fn new_with_proto(
+        cx: &mut js::context::JSContext,
+        global: &GlobalScope,
+        proto: Option<HandleObject>,
+    ) -> DomRoot<MediaStream> {
+        reflect_dom_object_with_proto(cx, Box::new(MediaStream::new_inherited()), global, proto)
+    }
+
+    pub(crate) fn new_single(
+        cx: &mut js::context::JSContext,
+        global: &GlobalScope,
+        id: MediaStreamId,
+        ty: MediaStreamType,
+    ) -> DomRoot<MediaStream> {
+        let track = MediaStreamTrack::new(cx, global, id, ty);
+        Self::new_with_track(cx, global, &track)
+    }
+
+    pub(crate) fn new_with_track(
+        cx: &mut js::context::JSContext,
+        global: &GlobalScope,
+        track: &MediaStreamTrack,
+    ) -> DomRoot<MediaStream> {
+        let this = Self::new(cx, global);
+        this.add_track(track);
+        this
+    }
+
+    pub(crate) fn get_tracks(&self) -> Ref<'_, [Dom<MediaStreamTrack>]> {
+        Ref::map(self.tracks.borrow(), |tracks| &**tracks)
+    }
+
+    pub(crate) fn add_track(&self, track: &MediaStreamTrack) {
+        self.tracks.borrow_mut().push(Dom::from_ref(track))
+    }
+
+    fn queue_track_event(&self, track: &MediaStreamTrack, event_type: &'static str) {
+        let this = Trusted::new(self);
+        let track = Trusted::new(track);
+        let event_type = Atom::from(event_type);
+        self.global()
+            .task_manager()
+            .dom_manipulation_task_source()
+            .queue(task!(media_stream_track_event: move |cx| {
+                let this = this.root();
+                let track = track.root();
+                let event = MediaStreamTrackEvent::new(
+                    cx,
+                    this.global().as_window(),
+                    event_type,
+                    false,
+                    false,
+                    &track,
+                );
+                event.upcast::<Event>().fire(cx, this.upcast::<EventTarget>());
+            }));
+    }
+}
+
+impl MediaStreamMethods<crate::DomTypeHolder> for MediaStream {
+    /// <https://w3c.github.io/mediacapture-main/#dom-mediastream-constructor>
+    fn Constructor(
+        cx: &mut js::context::JSContext,
+        global: &Window,
+        proto: Option<HandleObject>,
+    ) -> Fallible<DomRoot<MediaStream>> {
+        Ok(MediaStream::new_with_proto(cx, &global.global(), proto))
+    }
+
+    /// <https://w3c.github.io/mediacapture-main/#dom-mediastream-constructor>
+    fn Constructor_(
+        cx: &mut js::context::JSContext,
+        _: &Window,
+        proto: Option<HandleObject>,
+        stream: &MediaStream,
+    ) -> Fallible<DomRoot<MediaStream>> {
+        Ok(stream.clone_with_proto(cx, proto))
+    }
+
+    /// <https://w3c.github.io/mediacapture-main/#dom-mediastream-constructor>
+    fn Constructor__(
+        cx: &mut js::context::JSContext,
+        global: &Window,
+        proto: Option<HandleObject>,
+        tracks: Vec<DomRoot<MediaStreamTrack>>,
+    ) -> Fallible<DomRoot<MediaStream>> {
+        let new = MediaStream::new_with_proto(cx, &global.global(), proto);
+        for track in tracks {
+            // this is quadratic, but shouldn't matter much
+            // if this becomes a problem we can use a hash map
+            new.add_track(&track)
+        }
+        Ok(new)
+    }
+
+    /// <https://w3c.github.io/mediacapture-main/#dom-mediastream-gettracks>
+    fn Id(&self) -> DOMString {
+        self.id.id().to_string().into()
+    }
+
+    /// <https://w3c.github.io/mediacapture-main/#dom-mediastream-active>
+    fn Active(&self) -> bool {
+        self.tracks.borrow().iter().any(|track| track.is_live())
+    }
+
+    /// <https://w3c.github.io/mediacapture-main/#dom-mediastream-gettracks>
+    fn GetTracks(&self) -> Vec<DomRoot<MediaStreamTrack>> {
+        self.tracks
+            .borrow()
+            .iter()
+            .map(|x| DomRoot::from_ref(&**x))
+            .collect()
+    }
+
+    /// <https://w3c.github.io/mediacapture-main/#dom-mediastream-getaudiotracks>
+    fn GetAudioTracks(&self) -> Vec<DomRoot<MediaStreamTrack>> {
+        self.tracks
+            .borrow()
+            .iter()
+            .filter(|x| x.ty() == MediaStreamType::Audio)
+            .map(|x| DomRoot::from_ref(&**x))
+            .collect()
+    }
+
+    /// <https://w3c.github.io/mediacapture-main/#dom-mediastream-getvideotracks>
+    fn GetVideoTracks(&self) -> Vec<DomRoot<MediaStreamTrack>> {
+        self.tracks
+            .borrow()
+            .iter()
+            .filter(|x| x.ty() == MediaStreamType::Video)
+            .map(|x| DomRoot::from_ref(&**x))
+            .collect()
+    }
+
+    /// <https://w3c.github.io/mediacapture-main/#dom-mediastream-gettrackbyid>
+    fn GetTrackById(&self, id: DOMString) -> Option<DomRoot<MediaStreamTrack>> {
+        self.tracks
+            .borrow()
+            .iter()
+            .find(|x| x.id().id().to_string() == id)
+            .map(|x| DomRoot::from_ref(&**x))
+    }
+
+    /// <https://w3c.github.io/mediacapture-main/#dom-mediastream-addtrack>
+    fn AddTrack(&self, track: &MediaStreamTrack) {
+        let existing = self.tracks.borrow().iter().any(|x| x == &track);
+
+        if existing {
+            return;
+        }
+        self.add_track(track);
+        self.queue_track_event(track, "addtrack");
+    }
+
+    /// <https://w3c.github.io/mediacapture-main/#dom-mediastream-removetrack>
+    fn RemoveTrack(&self, track: &MediaStreamTrack) {
+        let removed = self
+            .tracks
+            .borrow()
+            .iter()
+            .any(|existing| *existing == track);
+        if !removed {
+            return;
+        }
+        self.tracks.borrow_mut().retain(|x| *x != track);
+        self.queue_track_event(track, "removetrack");
+    }
+
+    /// <https://w3c.github.io/mediacapture-main/#dom-mediastream-clone>
+    fn Clone(&self, cx: &mut js::context::JSContext) -> DomRoot<MediaStream> {
+        self.clone_with_proto(cx, None)
+    }
+
+    event_handler!(addtrack, GetOnaddtrack, SetOnaddtrack);
+    event_handler!(removetrack, GetOnremovetrack, SetOnremovetrack);
+}
+
+impl MediaStream {
+    fn clone_with_proto(
+        &self,
+        cx: &mut js::context::JSContext,
+        proto: Option<HandleObject>,
+    ) -> DomRoot<MediaStream> {
+        let new = MediaStream::new_with_proto(cx, &self.global(), proto);
+        for track in &*self.tracks.borrow() {
+            new.add_track(track)
+        }
+        new
+    }
+}

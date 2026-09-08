@@ -1,12 +1,59 @@
 [package]
 name = "nomad-browser"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
+[features]
+default = []
+native-servo = [
+    "dep:egui",
+    "dep:egui-winit",
+    "dep:egui_glow",
+    "dep:euclid",
+    "dep:glow",
+    "dep:image",
+    "dep:libc",
+    "dep:objc2",
+    "dep:objc2-app-kit",
+    "dep:objc2-foundation",
+    "dep:raw-window-handle",
+    "dep:resvg",
+    "dep:serde_json",
+    "dep:ureq",
+    "dep:windows-sys",
+    "dep:winit",
+    "dep:window-vibrancy",
+    "egui-winit/accesskit",
+    "nomad-engine/servo",
+]
+media-gstreamer = ["native-servo", "nomad-engine/media-gstreamer"]
+
 [dependencies]
+libc = { version = "0.2", optional = true }
+windows-sys = { version = "0.61", features = ["Win32_System_SystemInformation"], optional = true }
+egui = { version = "0.34.3", default-features = false, features = ["default_fonts"], optional = true }
+egui-winit = { version = "0.34.3", default-features = false, features = ["accesskit"], optional = true }
+egui_glow = { version = "0.34.3", features = ["winit"], optional = true }
+euclid = { version = "0.22", optional = true }
+glow = { version = "0.17.0", optional = true }
+image = { version = "0.25", default-features = false, features = ["ico", "jpeg", "png", "webp"], optional = true }
+resvg = { version = "0.45", default-features = false, optional = true }
+serde_json = { version = "1.0", optional = true }
+ureq = { version = "2.12", default-features = true, optional = true }
 nomad-core = { path = "../nomad-core" }
+nomad-engine = { path = "../nomad-engine" }
+nomad-shell = { path = "../nomad-shell" }
+url = "2.5"
+winit = { version = "0.30.13", optional = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = { version = "0.6", optional = true }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["NSApplication", "NSButton", "NSColor", "NSControl", "NSImage", "NSResponder", "NSView", "NSWindow"], optional = true }
+objc2-foundation = { version = "0.3", default-features = false, features = ["NSData"], optional = true }
+raw-window-handle = { version = "0.6", optional = true }
+window-vibrancy = { version = "0.8", optional = true }
 
 [lints.rust]
 unsafe_code = "deny"

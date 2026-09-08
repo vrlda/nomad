@@ -1,0 +1,278 @@
+{
+  "reference": {
+    "name": "XTLS Xray-core",
+    "version": "v25.12.8",
+    "commit": "81f8f398c7b2b845853b1e85087c6122acc6db0b"
+  },
+  "fixtures": [
+    {
+      "id": "blackhole-http",
+      "profile": {
+        "outbounds": [
+          {"protocol": "blackhole", "settings": {"response": {"type": "http"}}}
+        ]
+      },
+      "expected": {"protocol": "blackhole", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "freedom-as-is",
+      "profile": {
+        "outbounds": [
+          {"protocol": "freedom", "settings": {"domainStrategy": "AsIs"}}
+        ]
+      },
+      "expected": {"protocol": "freedom", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "dns-tcp-explicit-server",
+      "profile": {
+        "outbounds": [
+          {"protocol": "dns", "settings": {"network": "tcp", "address": "1.1.1.1", "port": 53}}
+        ]
+      },
+      "expected": {"protocol": "dns", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "socks-server-list",
+      "profile": {
+        "outbounds": [
+          {"protocol": "socks", "settings": {"servers": [{"address": "127.0.0.1", "port": 1080}]}}
+        ]
+      },
+      "expected": {"protocol": "socks", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "http-connect-server-list",
+      "profile": {
+        "outbounds": [
+          {"protocol": "http", "settings": {"servers": [{"address": "127.0.0.1", "port": 8080}]}}
+        ]
+      },
+      "expected": {"protocol": "http", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "vless-tcp-none",
+      "profile": {
+        "outbounds": [
+          {
+            "protocol": "vless",
+            "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "encryption": "none"}]}]},
+            "streamSettings": {"network": "tcp", "security": "none"}
+          }
+        ]
+      },
+      "expected": {"protocol": "vless", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "vless-websocket-tls",
+      "profile": {
+        "outbounds": [
+          {
+            "protocol": "vless",
+            "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "encryption": "none"}]}]},
+            "streamSettings": {"network": "ws", "security": "tls", "tlsSettings": {"serverName": "gateway.example"}, "wsSettings": {"path": "/ws", "host": "gateway.example"}}
+          }
+        ]
+      },
+      "expected": {"protocol": "vless", "transport": "websocket", "security": "tls"}
+    },
+    {
+      "id": "vless-grpc-tls",
+      "profile": {
+        "outbounds": [
+          {
+            "protocol": "vless",
+            "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "encryption": "none"}]}]},
+            "streamSettings": {"network": "grpc", "security": "tls", "tlsSettings": {"serverName": "gateway.example"}, "grpcSettings": {"serviceName": "nomad", "multiMode": true}}
+          }
+        ]
+      },
+      "expected": {"protocol": "vless", "transport": "grpc", "security": "tls"}
+    },
+    {
+      "id": "vless-kcp-none",
+      "profile": {
+        "outbounds": [
+          {
+            "protocol": "vless",
+            "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "encryption": "none"}]}]},
+            "streamSettings": {"network": "kcp", "security": "none", "kcpSettings": {"mtu": 1350, "tti": 50, "uplinkCapacity": 5, "downlinkCapacity": 20}}
+          }
+        ]
+      },
+      "expected": {"protocol": "vless", "transport": "mkcp", "security": "none"}
+    },
+    {
+      "id": "vless-xhttp-none",
+      "profile": {
+        "outbounds": [
+          {
+            "protocol": "vless",
+            "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "encryption": "none"}]}]},
+            "streamSettings": {"network": "xhttp", "security": "none", "xhttpSettings": {"path": "/x", "mode": "stream-up"}}
+          }
+        ]
+      },
+      "expected": {"protocol": "vless", "transport": "xhttp", "security": "none"}
+    },
+    {
+      "id": "shadowsocks-server-list",
+      "profile": {
+        "outbounds": [
+          {"protocol": "shadowsocks", "settings": {"servers": [{"address": "gateway.example", "port": 8388, "method": "aes-256-gcm", "password": "secret"}]}}
+        ]
+      },
+      "expected": {"protocol": "shadowsocks", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "vmess-vnext",
+      "profile": {
+        "outbounds": [
+          {"protocol": "vmess", "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "alterId": 0, "security": "auto"}]}]}}
+        ]
+      },
+      "expected": {"protocol": "vmess", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "trojan-server-list",
+      "profile": {
+        "outbounds": [
+          {"protocol": "trojan", "settings": {"servers": [{"address": "gateway.example", "port": 443, "password": "secret"}]}}
+        ]
+      },
+      "expected": {"protocol": "trojan", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "wireguard-client",
+      "profile": {
+        "outbounds": [
+          {"protocol": "wireguard", "settings": {"secretKey": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI=", "address": ["10.0.0.2/32"], "peers": [{"endpoint": "198.51.100.1:51820", "publicKey": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI="}]}}
+        ]
+      },
+      "expected": {"protocol": "wireguard", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "direct-alias",
+      "profile": {"outbounds": [{"protocol": "direct", "settings": {}}]},
+      "expected": {"protocol": "freedom", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "block-alias",
+      "profile": {"outbounds": [{"protocol": "block", "settings": {}}]},
+      "expected": {"protocol": "blackhole", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "reject-unknown-protocol",
+      "referenceAccepted": false,
+      "profile": {"outbounds": [{"protocol": "nomad-unknown", "settings": {}}]}
+    },
+    {
+      "id": "reject-reality-without-settings",
+      "referenceAccepted": false,
+      "profile": {
+        "outbounds": [
+          {
+            "protocol": "vless",
+            "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "encryption": "none"}]}]},
+            "streamSettings": {"network": "tcp", "security": "reality"}
+          }
+        ]
+      }
+    },
+    {
+      "id": "vmess-security-none",
+      "profile": {
+        "outbounds": [
+          {"protocol": "vmess", "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "alterId": 0, "security": "none"}]}]}}
+        ]
+      },
+      "expected": {"protocol": "vmess", "transport": "raw", "security": "none"}
+    },
+    {
+      "id": "vless-flow-vision-tls",
+      "profile": {
+        "outbounds": [
+          {
+            "protocol": "vless",
+            "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "encryption": "none", "flow": "xtls-rprx-vision"}]}]},
+            "streamSettings": {"network": "tcp", "security": "tls", "tlsSettings": {"serverName": "gateway.example"}}
+          }
+        ]
+      },
+      "expected": {"protocol": "vless", "transport": "raw", "security": "tls"}
+    },
+    {
+      "id": "vless-flow-vision-reality",
+      "profile": {
+        "outbounds": [
+          {
+            "protocol": "vless",
+            "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "encryption": "none", "flow": "xtls-rprx-vision"}]}]},
+            "streamSettings": {
+              "network": "tcp",
+              "security": "reality",
+              "realitySettings": {
+                "publicKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                "shortId": "abcd",
+                "serverName": "gateway.example"
+              }
+            }
+          }
+        ]
+      },
+      "expected": {"protocol": "vless", "transport": "raw", "security": "reality"}
+    },
+    {
+      "id": "reject-vless-flow-unknown",
+      "referenceAccepted": false,
+      "profile": {
+        "outbounds": [
+          {
+            "protocol": "vless",
+            "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "encryption": "none", "flow": "xtls-rprx-unknown"}]}]},
+            "streamSettings": {"network": "tcp", "security": "tls", "tlsSettings": {"serverName": "gateway.example"}}
+          }
+        ]
+      }
+    },
+    {
+      "id": "mkcp-seed",
+      "profile": {
+        "outbounds": [
+          {
+            "protocol": "vless",
+            "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "encryption": "none"}]}]},
+            "streamSettings": {"network": "kcp", "security": "none", "kcpSettings": {"mtu": 1350, "tti": 50, "seed": "nomad-seed"}}
+          }
+        ]
+      },
+      "expected": {"protocol": "vless", "transport": "mkcp", "security": "none"}
+    },
+    {
+      "id": "mkcp-header-disguise",
+      "profile": {
+        "outbounds": [
+          {
+            "protocol": "vless",
+            "settings": {"vnext": [{"address": "gateway.example", "port": 443, "users": [{"id": "00112233-4455-6677-8899-aabbccddeeff", "encryption": "none"}]}]},
+            "streamSettings": {"network": "kcp", "security": "none", "kcpSettings": {"header": {"type": "srtp", "seed": "noise"}}}
+          }
+        ]
+      },
+      "expected": {"protocol": "vless", "transport": "mkcp", "security": "none"}
+    },
+    {
+      "id": "hysteria-v2-auth",
+      "profile": {
+        "outbounds": [
+          {
+            "protocol": "hysteria",
+            "settings": {"address": "gateway.example", "port": 443},
+            "streamSettings": {"network": "hysteria", "security": "tls", "hysteriaSettings": {"version": 2, "auth": "secret"}}
+          }
+        ]
+      },
+      "expected": {"protocol": "hysteria", "transport": "hysteria", "security": "tls"}
+    }
+  ]
+}

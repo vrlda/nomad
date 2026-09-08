@@ -1,0 +1,13 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
+// https://w3c.github.io/ServiceWorker/#cachestorage
+[Pref="dom_serviceworker_enabled", SecureContext, Exposed=(Window,Worker)]
+interface CacheStorage {
+  [NewObject, BinaryName="Match_"] Promise<Response?> match(RequestInfo request, optional CacheQueryOptions options = {});
+  [NewObject] Promise<Cache> open(DOMString cacheName);
+  [NewObject] Promise<boolean> has(DOMString cacheName);
+  [NewObject] Promise<boolean> delete(DOMString cacheName);
+  [NewObject] Promise<sequence<DOMString>> keys();
+};

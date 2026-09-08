@@ -3,14 +3,24 @@ resolver = "2"
 members = [
     "crates/nomad-core",
     "crates/nomad-browser",
+    "crates/nomad-engine",
+    "crates/nomad-shell",
 ]
+exclude = ["vendor/servo", "vendor/stylo", "fuzz"]
 
 [workspace.package]
 edition = "2021"
 license = "MPL-2.0"
-rust-version = "1.80"
+rust-version = "1.88"
 
 [profile.release]
 lto = "thin"
 codegen-units = 1
 strip = "symbols"
+
+# Servo and WebRender are too compositor-heavy to provide representative
+# scrolling performance at Cargo's default opt-level 0. Keep workspace crates
+# quick to edit while optimizing third-party rendering dependencies used by
+# the normal `cargo run` development workflow.
+[profile.dev.package."*"]
+opt-level = 2

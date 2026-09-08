@@ -1,0 +1,109 @@
+name: WPT corpus
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  corpus:
+    name: WPT corpus (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: linux
+            python: tools/.wpt-venv/bin/python
+            blocked: false
+          - os: macos-latest
+            label: macos
+            python: tools/.wpt-venv/bin/python
+            blocked: false
+          - os: windows-latest
+            label: windows
+            python: python
+            blocked: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build native Nomad binary (debug)
+        if: matrix.blocked != true
+        run: cargo build -p nomad-browser --features native-servo
+
+      - name: Prepare WPT virtualenv
+        if: matrix.blocked != true
+        shell: bash
+        run: bash tools/setup-wpt-venv.sh
+
+      - name: Run declared WPT corpus
+        if: matrix.blocked != true
+        shell: bash
+        run: |
+          ${{ matrix.python }} tools/run-nomad-wpt.py \
+            --python ${{ matrix.python }} \
+            --artifacts-dir tools/wpt-results \
+            --platform-override ${{ matrix.label }}
+
+      - name: Record unsupported-platform artifact
+        if: matrix.blocked == true
+        shell: bash
+        run: |
+          ${{ matrix.python }} tools/run-nomad-wpt.py \
+            --artifacts-dir tools/wpt-results \
+            --platform-override ${{ matrix.label }} \
+            --blocked-reason "Upstream Servo does not ship a Windows WPT runner"
+
+      - name: Upload deterministic artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wpt-corpus-${{ matrix.label }}
+          path: tools/wpt-results/*.json
+          if-no-files-found: error
+
+  evidence-report:
+    name: Aggregate WPT evidence
+    if: always()
+    needs: corpus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wpt-corpus-*
+          path: tools/wpt-results
+          merge-multiple: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate evidence report
+        shell: bash
+        run: |
+          python3 tools/generate-validation-report.py \
+            --artifacts-dir tools/wpt-results \
+            --output tools/wpt-results/validation-report.json \
+            --fixture-set tools/nomad-wpt-corpus.txt \
+            --limitation "Native PDF, accessibility, wallet, DevTools panel, and clean-machine release gates are tracked separately"
+
+      - name: Upload evidence report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wpt-validation-report
+          path: tools/wpt-results/validation-report.json
+          if-no-files-found: error
