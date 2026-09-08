@@ -32,6 +32,14 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Install Servo system dependencies
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          grep -vE '^($|#)' vendor/servo/python/servo/platform/linux_packages/apt/apt_common.txt \
+            | xargs sudo apt-get install -y
+
       - name: Build native release binary
         run: cargo build --release -p nomad-browser --features native-servo
 

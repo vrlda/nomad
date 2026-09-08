@@ -38,6 +38,19 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Restore pinned Servo test corpus
+        if: matrix.blocked != true
+        shell: bash
+        run: tools/restore-servo-tests.sh
+
+      - name: Install Servo system dependencies
+        if: runner.os == 'Linux' && matrix.blocked != true
+        shell: bash
+        run: |
+          sudo apt-get update
+          grep -vE '^($|#)' vendor/servo/python/servo/platform/linux_packages/apt/apt_common.txt \
+            | xargs sudo apt-get install -y
+
       - name: Build native Nomad binary (debug)
         if: matrix.blocked != true
         run: cargo build -p nomad-browser --features native-servo
