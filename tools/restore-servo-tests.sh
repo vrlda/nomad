@@ -16,11 +16,12 @@ fi
 TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/nomad-servo-tests.XXXXXX")"
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
-git clone --quiet --no-checkout --filter=blob:none \
-  https://github.com/servo/servo.git "$TEMP_DIR/servo"
+git init --quiet "$TEMP_DIR/servo"
+git -C "$TEMP_DIR/servo" remote add origin https://github.com/servo/servo.git
 git -C "$TEMP_DIR/servo" sparse-checkout init --cone
 git -C "$TEMP_DIR/servo" sparse-checkout set tests
-git -C "$TEMP_DIR/servo" checkout --quiet "$SERVO_REV"
+git -C "$TEMP_DIR/servo" fetch --quiet --depth 1 origin "$SERVO_REV"
+git -C "$TEMP_DIR/servo" checkout --quiet --detach FETCH_HEAD
 
 mkdir -p "$DEST"
 cp -R "$TEMP_DIR/servo/tests/." "$DEST/"
