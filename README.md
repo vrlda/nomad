@@ -1,20 +1,70 @@
-# Nomad Browser
+<p align="center">
+  <img src="crates/nomad-browser/assets/nomad-app-icon.png" width="112" alt="Nomad Browser icon">
+</p>
 
-Rust browser project built around a locally owned Servo fork, first-party UMC
-networking, and a Rust Xray-compatible tunnel.
+<h1 align="center">Nomad Browser</h1>
 
-## Current status: Alpha
+<p align="center">
+  A lightweight, privacy-first browser built for people who want control.
+</p>
+
+<p align="center">
+  Fast vertical-tab browsing, aggressive resource management, user-owned
+  networking, extensions, and optional UMC support.
+</p>
+
+<p align="center">
+  <a href="https://github.com/vrlda/nomad/releases/tag/v0.1.0-alpha.1"><strong>Download Alpha</strong></a>
+  ·
+  <a href="#build-from-source"><strong>Build from source</strong></a>
+</p>
+
+![Nomad Browser Alpha showing its vertical-tab interface](docs/screenshots/nomad-browser-alpha.png)
+
+## Why Nomad?
+
+- **Lightweight under heavy tab loads.** Background tabs can be throttled,
+  suspended, and restored without surrendering the whole session.
+- **Private and secure by default.** Site-partitioned caches, explicit
+  permissions, and fail-closed routing reduce accidental data exposure.
+- **Designed around you.** Vertical tabs, workspaces, split browsing, reader
+  mode, extensions, and native controls form one coherent interface.
+- **Your network belongs to you.** Browse directly or deliberately choose
+  user-owned UMC or Xray routing—never a silent fallback.
+
+## Alpha status
+
+[Download Nomad Browser Alpha for macOS](https://github.com/vrlda/nomad/releases/tag/v0.1.0-alpha.1).
+The build is ad-hoc signed and not notarized, so macOS may require confirming
+its first launch in System Settings → Privacy & Security.
+
+### Known Alpha limitations
+
+- macOS is the primary packaged and tested desktop experience.
+- The release is not notarized and automatic signed updates are still being
+  hardened.
+- Web compatibility follows Servo's current surface and is not yet at
+  Chromium or Safari parity.
+- Some advanced Xray transports and compatibility modes remain intentionally
+  unsupported rather than silently downgraded.
+- Extension support targets Nomad's documented compatibility surface, not the
+  complete Chrome WebExtensions API.
+
+## Roadmap
+
+| Now | Next | Later |
+| --- | --- | --- |
+| Stable daily browsing and vertical tabs | Polished split browsing and workspace flows | Broader desktop packaging |
+| Privacy controls and site-partitioned cache | Expanded extension compatibility | Notarized, signed update delivery |
+| User-owned UMC/Xray routing | More Nomad-native networking controls | Wider Servo web-platform coverage |
+
+## Technical overview
 
 The foundation contains the switchable routing contract, a stateful browser
 shell, and an embedded Servo engine. The full Servo and Stylo source trees are
 stored locally under `vendor/` and are compiled only for the native browser
 feature. Nomad renders pages offscreen and composites them with a native GPU
 URL bar and vertical tab sidebar.
-
-Alpha builds for macOS are available from
-[GitHub Releases](https://github.com/vrlda/nomad/releases). They are currently
-ad-hoc signed and not notarized; macOS may require confirming the first launch
-from System Settings → Privacy & Security.
 
 Network modes are individually selectable:
 
@@ -30,7 +80,7 @@ other; passing both enable flags to the CLI is rejected.
 An enabled backend that is unavailable fails closed. The browser never silently
 falls back to direct traffic when UMC or Xray is enabled.
 
-## Run
+## Build from source
 
 ```sh
 # Launch the graphical browser with a clean session.
