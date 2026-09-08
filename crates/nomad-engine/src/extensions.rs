@@ -1604,12 +1604,17 @@ fn collect_directory_resources(
         let relative = path.strip_prefix(root).map_err(|error| {
             ExtensionError::InvalidManifest(format!("extension resource path: {error}"))
         })?;
-        let name = relative.to_str().ok_or_else(|| {
-            ExtensionError::InvalidManifest("extension resource path is not UTF-8".into())
-        })?;
-        validate_resource_name(name)?;
+        let name = relative
+            .components()
+            .map(|component| component.as_os_str().to_str())
+            .collect::<Option<Vec<_>>>()
+            .ok_or_else(|| {
+                ExtensionError::InvalidManifest("extension resource path is not UTF-8".into())
+            })?
+            .join("/");
+        validate_resource_name(&name)?;
         if name != "manifest.json" {
-            names.push(name.to_owned());
+            names.push(name);
         }
     }
     Ok(())

@@ -38,6 +38,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - uses: astral-sh/setup-uv@v8.1.0
+        if: matrix.blocked != true
+
       - name: Restore pinned Servo test corpus
         if: matrix.blocked != true
         shell: bash

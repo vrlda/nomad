@@ -35,9 +35,11 @@ git -C "$TEMP_DIR/servo" sparse-checkout set \
   tests/wpt/tests/encoding \
   tests/wpt/tests/fetch \
   tests/wpt/tests/html/dom/documents/dom-tree-accessors \
+  tests/wpt/tests/html/anonymous-iframe \
   tests/wpt/tests/html/syntax/parsing-html-fragments \
   tests/wpt/tests/performance-timeline \
   tests/wpt/tests/url \
+  tests/wpt/tests/web-animations/interfaces/Animation \
   tests/wpt/tests/websockets \
   tests/wpt/tests/webstorage \
   tests/wpt/tests/workers/constructors/Worker \
