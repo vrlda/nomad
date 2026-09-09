@@ -8,9 +8,12 @@ DEST="${SERVO_TESTS_DEST:-$ROOT/vendor/servo/tests}"
 SENTINEL="$DEST/wpt/tests/tools/wptrunner/wptrunner/wptrunner.py"
 META_SENTINEL="$DEST/wpt/meta/MANIFEST.json"
 MOZILLA_SENTINEL="$DEST/wpt/mozilla/tests/.gitignore"
+WEBGL_SENTINEL="$DEST/wpt/webgl/meta/MANIFEST.json"
+WEBGPU_SENTINEL="$DEST/wpt/webgpu/meta/MANIFEST.json"
 SERVO_REV="1d44e5dd6a8b64c02f9dbf7fcbdf4ebdd0740019"
 
-if [[ -f "$SENTINEL" && -f "$META_SENTINEL" && -f "$MOZILLA_SENTINEL" ]]; then
+if [[ -f "$SENTINEL" && -f "$META_SENTINEL" && -f "$MOZILLA_SENTINEL" \
+  && -f "$WEBGL_SENTINEL" && -f "$WEBGPU_SENTINEL" ]]; then
   echo "Servo test corpus already present"
   exit 0
 fi
@@ -26,6 +29,8 @@ git -C "$TEMP_DIR/servo" sparse-checkout set \
   tests/unit \
   tests/wpt/meta \
   tests/wpt/mozilla \
+  tests/wpt/webgl \
+  tests/wpt/webgpu \
   tests/wpt/tests/tools \
   tests/wpt/tests/resources \
   tests/wpt/tests/FileAPI \
@@ -59,4 +64,6 @@ cp -R "$TEMP_DIR/servo/tests/." "$DEST/"
 test -f "$SENTINEL"
 test -f "$META_SENTINEL"
 test -f "$MOZILLA_SENTINEL"
+test -f "$WEBGL_SENTINEL"
+test -f "$WEBGPU_SENTINEL"
 echo "Restored Servo test corpus at $SERVO_REV"
